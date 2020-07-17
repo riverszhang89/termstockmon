@@ -1,0 +1,50 @@
+#!/bin/sh
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+token=`cat ~/.finnhubtoken`
+
+while true; do
+  clear; date; echo;
+  totalc=0
+  totalpc=0
+
+  printf "\e[7m%-6s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$'
+  while read t; do
+    sym=`echo $t | awk '{print $1}'`
+    quantity=`echo $t | awk '{print $2}'`
+  
+    curl -s "https://finnhub.io/api/v1/quote?symbol=$sym&token=$token" >.json
+    current=`jq '.c' .json`
+    closed=`jq '.pc' .json`
+  
+    totalc=`echo "scale=2; $quantity*$current+$totalc" | bc -l | awk '{printf "%.2f", $0}'`
+    totalpc=`echo "scale=2; $quantity*$closed+$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
+
+    ind=`echo "scale=2; $quantity*($current-$closed)" | bc -l | awk '{printf "%.2f", $0}'`
+    chg=`echo "scale=2; 100*($current-$closed)/$closed" | bc -l | awk '{printf "%.2f", $0}'`
+
+    neg=${chg:0:1}
+  
+    if [ "$neg" = "-" ]; then
+      printf "${RED}%-6s %-12s %-12s %-12s${NC}\n" $sym $current "$chg%" $ind
+    else
+      printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" $sym $current "+$chg%" "+$ind"
+    fi
+  done <~/.tickers
+  
+  printf "\e[7m%-6s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$'
+
+  ind=`echo "scale=2; $totalc-$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
+  chg=`echo "scale=2; 100*($totalc-$totalpc)/$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
+  neg=${chg:0:1}
+
+  if [ "$neg" = "-" ]; then
+    printf "${RED}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $totalc "$chg%" $ind
+  else
+    printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $current "+$chg%" "+$ind"
+  fi
+
+  sleep 60
+done

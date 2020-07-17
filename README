@@ -1,0 +1,8 @@
+Data source: https://finnhub.io
+
+Get a free finnhub API token and place it in ~/.finnhubtoken
+
+Enter symbols and quantities in ~/.tickers, for instance,
+
+AAPL 10000
+AMZN 10000
