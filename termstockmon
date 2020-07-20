@@ -43,7 +43,7 @@ while true; do
   if [ "$neg" = "-" ]; then
     printf "${RED}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $totalc "$chg%" $ind
   else
-    printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $current "+$chg%" "+$ind"
+    printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $totalc "+$chg%" "+$ind"
   fi
 
   sleep 60
