@@ -9,16 +9,19 @@ while true; do
   clear; date; echo;
   totalc=0
   totalpc=0
+  totalb=0
 
   printf "\e[7m%-6s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$'
   while read t; do
     sym=`echo $t | awk '{print $1}'`
     quantity=`echo $t | awk '{print $2}'`
+    base=`echo $t | awk '{print $3}'`
   
     curl -s "https://finnhub.io/api/v1/quote?symbol=$sym&token=$token" >.json
     current=`jq '.c' .json`
     closed=`jq '.pc' .json`
   
+    totalb=`echo "scale=2; $quantity*$base+$totalb" | bc -l | awk '{printf "%.2f", $0}'`
     totalc=`echo "scale=2; $quantity*$current+$totalc" | bc -l | awk '{printf "%.2f", $0}'`
     totalpc=`echo "scale=2; $quantity*$closed+$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
 
@@ -36,6 +39,7 @@ while true; do
   
   printf "\e[7m%-6s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$'
 
+  # today
   ind=`echo "scale=2; $totalc-$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
   chg=`echo "scale=2; 100*($totalc-$totalpc)/$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
   neg=${chg:0:1}
@@ -44,6 +48,17 @@ while true; do
     printf "${RED}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $totalc "$chg%" $ind
   else
     printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $totalc "+$chg%" "+$ind"
+  fi
+
+  # total
+  ind=`echo "scale=2; $totalc-$totalb" | bc -l | awk '{printf "%.2f", $0}'`
+  chg=`echo "scale=2; 100*($totalc-$totalb)/$totalb" | bc -l | awk '{printf "%.2f", $0}'`
+  neg=${chg:0:1}
+
+  if [ "$neg" = "-" ]; then
+    printf "${RED}%-6s %-12s %-12s %-12s${NC}\n" 'TODAY' $totalc "$chg%" $ind
+  else
+    printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" 'TOTAL' ' ' "+$chg%" "+$ind"
   fi
 
   sleep 60
