@@ -11,7 +11,7 @@ while true; do
   totalpc=0
   totalb=0
 
-  printf "\e[7m%-6s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$'
+  printf "\e[7m%-6s %-12s %-12s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$' 'Total %' 'Total $'
   while read t; do
     sym=`echo $t | awk '{print $1}'`
     quantity=`echo $t | awk '{print $2}'`
@@ -28,16 +28,27 @@ while true; do
     ind=`echo "scale=2; $quantity*($current-$closed)" | bc -l | awk '{printf "%.2f", $0}'`
     chg=`echo "scale=2; 100*($current-$closed)/$closed" | bc -l | awk '{printf "%.2f", $0}'`
 
+    inddiff=`echo "scale=2; $quantity*($current-$base)" | bc -l | awk '{printf "%.2f", $0}'`
+    indpct=`echo "scale=2; 100*($current-$base)/$base" | bc -l | awk '{printf "%.2f", $0}'`
+
     neg=${chg:0:1}
   
     if [ "$neg" = "-" ]; then
-      printf "${RED}%-6s %-12s %-12s %-12s${NC}\n" $sym $current "$chg%" $ind
+      printf "${RED}%-6s %-12s %-12s %-12s${NC}" $sym $current "$chg%" $ind
     else
-      printf "${GREEN}%-6s %-12s %-12s %-12s${NC}\n" $sym $current "+$chg%" "+$ind"
+      printf "${GREEN}%-6s %-12s %-12s %-12s${NC}" $sym $current "+$chg%" "+$ind"
     fi
+
+    neg=${inddiff:0:1}
+    if [ "$neg" = "-" ]; then
+      printf "${RED} %-12s %-12s${NC}\n" "$indpct%" $inddiff
+    else
+      printf "${GREEN} %-12s %-12s${NC}\n" "+$indpct%" "+$inddiff"
+    fi
+
   done <~/.tickers
   
-  printf "\e[7m%-6s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$'
+  printf "\e[7m%-6s %-12s %-12s %-12s %-12s %-12s${NC}\n" 'Symbol' 'Current' '%' '$' 'Total %' 'Total $'
 
   # today
   ind=`echo "scale=2; $totalc-$totalpc" | bc -l | awk '{printf "%.2f", $0}'`
